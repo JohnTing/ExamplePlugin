@@ -1,0 +1,190 @@
+package example;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import arc.Events;
+import arc.math.Angles;
+import arc.math.Mathf;
+import arc.math.geom.Vec2;
+import arc.util.CommandHandler;
+import arc.util.Log;
+import arc.util.Time;
+import arc.util.Timer.Task;
+import mindustry.Vars;
+import mindustry.ai.Pathfinder.PathTarget;
+import mindustry.content.Blocks;
+import mindustry.content.UnitTypes;
+import mindustry.entities.Units;
+import mindustry.entities.bullet.BulletType;
+import mindustry.entities.type.BaseUnit;
+import mindustry.entities.type.Player;
+import mindustry.entities.type.base.GroundUnit;
+import mindustry.entities.units.UnitState;
+import mindustry.game.EventType;
+import mindustry.game.Team;
+import mindustry.gen.*;
+import mindustry.plugin.Plugin;
+import mindustry.type.Item;
+import mindustry.type.ItemStack;
+import mindustry.type.Weapon;
+import mindustry.world.Tile;
+import mindustry.world.blocks.defense.turrets.BurstTurret;
+
+import mindustry.type.UnitType;
+import static mindustry.Vars.*;
+
+
+public class UnitPlugin extends Plugin {
+
+  UnitState nullState = new UnitState(){ 
+    GroundUnit unit;
+
+    float x;
+    float y;
+    public void entered() {
+    }
+    public void update() {
+      unit.velocity().set(GroundUnit.maxAbsVelocity, 0);
+      unit.velocity().setAngle(unit.lastPosition().angleTo(targetTile));
+    }
+    public void set(GroundUnit groundUnit) {
+      this.unit = groundUnit;
+    }
+  };
+
+  // register event handlers and create variables in the constructor
+
+  public UnitPlugin() {
+      
+    
+
+    UnitState customState = new UnitState(){
+
+      public void entered(){
+      }
+      public void update(){
+        
+      }
+    };
+    Events.on(EventType.TapEvent.class, e -> {
+      Player player = e.player;
+      Tile tile = e.tile;
+      // draw
+    });
+
+    Events.on(EventType.Trigger.update.getClass(), e -> {
+
+      Player player = null;
+      if(Vars.playerGroup.size() >= 1) {
+        player = Vars.playerGroup.all().get(0);
+      }
+      if(player != null) {
+        //Vec2 playerpos = player.lastPosition();
+        Tile playertile = world.tileWorld(player.pointerX, player.pointerY);
+        
+        for(BaseUnit unit : Vars.unitGroup) {
+          if (unit instanceof GroundUnit) {
+            GroundUnit gUnit = (GroundUnit)unit;
+            gUnit.setState(nullState);
+            // gUnit.velocity().setZero();
+            
+            if(gUnit.lastPosition().dst(playertile) > 30f) {
+              //gUnit.angleTo(player);
+              //gUnit.velocity().add(GroundUnit.maxAbsVelocity, GroundUnit.maxAbsVelocity);
+              //gUnit.velocity().setAngle(gUnit.lastPosition().angleTo(playerpos));
+              unitMoveToTile(playertile, gUnit);
+              //gUnit.updateTargeting();
+              //gUnit.updateVelocity();
+            }
+            else {
+              gUnit.velocity().setZero();
+              //gUnit.updateVelocity();
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  protected void unitMoveToTile(Tile targetTile, GroundUnit unit){
+    Tile tile = world.tileWorld(unit.x, unit.y);
+    if(targetTile == null || tile == targetTile) return;
+
+    // unit.velocity().add(unit.velocity().trns(unit.angleTo(targetTile), unit.getType().speed * Time.delta()));
+    unit.velocity().set(GroundUnit.maxAbsVelocity, 0);
+    unit.velocity().setAngle(unit.lastPosition().angleTo(targetTile));
+    // unit.tar
+    // unit.rotation = Mathf.slerpDelta(unit.velocity().angle(), unit.rotation, unit.getType().rotatespeed);
+  }
+
+  protected void unitMoveToCore(PathTarget path, GroundUnit unit){
+    Tile tile = world.tileWorld(unit.x, unit.y);
+    if(tile == null) return;
+    Tile targetTile = pathfinder.getTargetTile(tile, unit.getTeam(), path);
+
+    if(tile == targetTile) return;
+
+    unit.velocity().add(unit.velocity().trns(unit.angleTo(targetTile), unit.getType().speed * Time.delta()));
+    unit.rotation = Mathf.slerpDelta(unit.velocity().angle(), unit.rotation, unit.getType().rotatespeed);
+  }
+
+  // register commands that run on the server
+  @Override
+  public void registerServerCommands(CommandHandler handler) {
+    handler.register("reactors", "List all thorium reactors in the map.", args -> {
+      for (int x = 0; x < Vars.world.width(); x++) {
+        for (int y = 0; y < Vars.world.height(); y++) {
+          // loop through and log all found reactors
+          if (Vars.world.tile(x, y).block() == Blocks.thoriumReactor) {
+            Log.info("Reactor at {0}, {1}", x, y);
+          }
+        }
+      }
+    });
+  }
+
+  public void createUnit(float x, float y, Team team) {
+    BaseUnit baseUnit = UnitTypes.chaosArray.create(team);
+    baseUnit.set(x, y);
+    baseUnit.add();
+    baseUnit.setState(nullState);
+
+
+  }
+
+
+  // register commands that player can invoke in-game
+  @Override
+  public void registerClientCommands(CommandHandler handler) {
+
+    // register a simple reply command
+    
+    //register a simple reply command
+    handler.<Player>register("test", "<text...>", "A simple ping command that test.", (args, player) -> {
+
+      createUnit(player.x, player.y, player.getTeam());
+
+    });
+
+    //register a simple reply command
+    handler.<Player>register("reply", "<text...>", "A simple ping command that echoes a player's text.", (args, player) -> {
+        player.sendMessage("You said: [accent] " + args[0]);
+    });
+
+    //register a whisper command which can be used to send other players messages
+    handler.<Player>register("whisper", "<player> <text...>", "Whisper text to another player.", (args, player) -> {
+      //find player by name
+      Player other = Vars.playerGroup.find(p -> p.name.equalsIgnoreCase(args[0]));
+
+      //give error message with scarlet-colored text if player isn't found
+      if(other == null){
+          player.sendMessage("[scarlet]No player by that name found!");
+          return;
+      }
+
+      //send the other player a message, using [lightgray] for gray text color and [] to reset color
+      other.sendMessage("[lightgray](whisper) " + player.name + ":[] " + args[1]);
+    });
+  }
+}
