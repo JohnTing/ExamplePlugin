@@ -1,7 +1,9 @@
 {
   "name": "ExamplePlugin",
   "author": "JohnTing",
-  "main": "example.ItemBullet",
+  "main": "unitcontrol.UnitControlPlugin",
   "description": "A plugin to demonstrate some basic features.",
   "version": 1.0
 }
+
+
