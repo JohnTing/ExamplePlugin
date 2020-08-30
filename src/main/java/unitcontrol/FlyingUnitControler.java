@@ -44,7 +44,6 @@ public class FlyingUnitControler extends UnitControler {
         return;
       } 
 
-
       if (player.isShooting()) {
         rallyAttack();
       } else {

@@ -6,13 +6,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import arc.Events;
 import arc.graphics.Color;
 import arc.util.CommandHandler;
+import arc.util.Interval;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Fx;
+import mindustry.content.UnitTypes;
 import mindustry.entities.Effects;
 import mindustry.entities.Units;
 import mindustry.entities.traits.TargetTrait;
@@ -27,6 +30,7 @@ import mindustry.game.Team;
 import mindustry.game.EventType.BlockDestroyEvent;
 import mindustry.game.EventType.TapConfigEvent;
 import mindustry.game.EventType.TapEvent;
+import mindustry.game.EventType.Trigger;
 import mindustry.gen.Call;
 import mindustry.plugin.Plugin;
 import mindustry.world.Tile;
@@ -34,46 +38,81 @@ import mindustry.world.blocks.units.CommandCenter.CommandCenterEntity;
 import mindustry.world.meta.BlockFlag;
 
 import static mindustry.Vars.indexer;
+
 public class UnitControlPlugin extends Plugin {
 
   // register event handlers and create variables in the constructor
   public UnitControlPlugin() {
 
-    /*
-    Map<Player, Unit> playerMap = new HashMap<Player, Unit>();
-    Map<Unit, UnitControler> unitMap = new HashMap<Unit, UnitControler>();
-*/
-    Map<Player, Map<Unit, UnitControler>> controlMap = new HashMap<Player, Map<Unit, UnitControler>>();
+    Map<Player, Set<Unit>> playersMap = new HashMap<Player, Set<Unit>>();
+    Map<Unit, UnitControler> unitsMap = new HashMap<Unit, UnitControler>();
+
+    // Map<Player, Map<Unit, UnitControler>> controlMap = new HashMap<Player,
+    // Map<Unit, UnitControler>>();
     Map<Player, UnitCommand> lastCommand = new HashMap<Player, UnitCommand>();
 
+    Interval timer = new Interval(5);
+
+    // Re-control all units that should be controlled,
+    // Because in some cases the unit status will be overwritten.
+    // (For example, deleting the last commandCenter)
+    // This might be what UnitControler should do
+    Events.on(Trigger.update.getClass(), event -> {
+      if (timer.get(0, 60)) {
+        List<Unit> removekey = new ArrayList<Unit>();
+        for (Player player : Vars.playerGroup) {
+          UnitCommand command = UnitCommand.rally;
+          if (lastCommand.get(player) != null) {
+            command = lastCommand.get(player);
+          }
+          Set<Unit> unitSet = playersMap.get(player);
+          if (unitSet != null) {
+            for (Unit unit : unitSet) {
+              if (unit.isDead()) {
+                removekey.add(unit);
+              } else {
+                UnitControler controler = unitsMap.get(unit);
+                if (controler != null) {
+                  controler.setCommand(command);
+                }
+              }
+            }
+          }
+        }
+        for (Unit unit : removekey) {
+          unitsMap.remove(unit);
+        }
+      }
+    });
 
     Events.on(TapConfigEvent.class, event -> {
       Player player = event.player;
       Tile tile = event.tile;
       int value = event.value;
 
-      if(tile != null && tile.block() == Blocks.commandCenter) {
+      if (tile != null && tile.block() == Blocks.commandCenter) {
         UnitCommand command = UnitCommand.attack;
         if (value < UnitCommand.all.length) {
           command = UnitCommand.all[value];
         }
         lastCommand.put(player, command);
 
-        Map<Unit, UnitControler> unitMap = controlMap.get(player);
-        if(unitMap != null) {
+        Set<Unit> unitSet = playersMap.get(player);
+        if (unitSet != null) {
           if (command == UnitCommand.retreat) {
-            unitMap.clear();
+            unitSet.clear();
           } else {
             List<Unit> delKey = new ArrayList<Unit>();
-            for (Map.Entry<Unit, UnitControler> entry : unitMap.entrySet()) {
-              if (entry.getKey().isDead()) {
-                delKey.add(entry.getKey());
+            for (Unit unit : unitSet) {
+
+              if (unit.isDead()) {
+                delKey.add(unit);
               } else {
-                entry.getValue().setCommand(command);
+                unitsMap.get(unit).setCommand(command);
               }
             }
             for (Unit unit : delKey) {
-              unitMap.remove(unit);
+              unitSet.remove(unit);
             }
           }
         }
@@ -85,56 +124,69 @@ public class UnitControlPlugin extends Plugin {
       Tile tile = e.tile;
 
       UnitCommand command = UnitCommand.rally;
-      
-      if(lastCommand.get(player) != null) {
+
+      if (lastCommand.get(player) != null) {
         command = lastCommand.get(player);
       }
 
-      if(command == UnitCommand.retreat) {
+      if (command == UnitCommand.retreat) {
         return;
       }
 
       Unit seleteedUnit = Units.closest(player.getTeam(), tile.drawx(), tile.drawy(), 40f, u -> !u.isDead());
-      
-      if(seleteedUnit instanceof BaseUnit) {
-        BaseUnit unit = (BaseUnit)seleteedUnit;
 
-        Call.sendMessage("selete");
-        Map<Unit, UnitControler> unitMap = controlMap.get(player);
+      if (seleteedUnit instanceof BaseUnit) {
+        BaseUnit unit = (BaseUnit) seleteedUnit;
 
-        if (unitMap == null) {
-          unitMap = new HashMap<Unit, UnitControler>();
-          controlMap.put(player, unitMap);
+        // If the unit has been controlled
+        if (unitsMap.containsKey(unit)) {
+          return;
         }
-        if (!unitMap.containsKey(unit)) {
+
+        Set<Unit> unitSet = playersMap.get(player);
+
+        if (unitSet == null) {
+          unitSet = new HashSet<Unit>();
+          playersMap.put(player, unitSet);
+        }
+        if (!unitSet.contains(unit)) {
           UnitControler controler = null;
           if (unit instanceof GroundUnit) {
             controler = new GroundUnitControler(unit, player);
-          }
-          else if (unit instanceof HoverUnit) {
+          } else if (unit instanceof HoverUnit) {
+            controler = new FlyingUnitControler(unit, player);
+          } else if (unit instanceof FlyingUnit) {
             controler = new FlyingUnitControler(unit, player);
           }
-          else if (unit instanceof FlyingUnit) {
-            controler = new FlyingUnitControler(unit, player);
-          }
-          if(controler != null) {
-            unitMap.put(unit, controler);
+          if (controler != null) {
+            unitSet.add(unit);
+            unitsMap.put(unit, controler);
             Call.onEffect(Fx.dooropenlarge, unit.getX(), unit.getY(), 0, Color.blue);
             controler.setCommand(command);
           }
-        } 
+        }
       }
     });
   }
 
   public boolean isCommanded() {
     Team team = Team.sharded;
-    return indexer.getAllied(team, BlockFlag.comandCenter).size != 0 && indexer.getAllied(team, BlockFlag.comandCenter).first().entity instanceof CommandCenterEntity;
+    return indexer.getAllied(team, BlockFlag.comandCenter).size != 0
+        && indexer.getAllied(team, BlockFlag.comandCenter).first().entity instanceof CommandCenterEntity;
   }
 
   // register commands that player can invoke in-game
   @Override
   public void registerClientCommands(CommandHandler handler) {
+
+    handler.<Player>register("send", "<text...>", "A simple ping command that echoes a player's text.",
+        (args, player) -> {
+          //if (args[0] == "erad") {
+            BaseUnit baseUnit = UnitTypes.eradicator.create(player.getTeam());
+            baseUnit.set(player.x, player.y);
+            baseUnit.add();
+          //}
+        });
 
     // register a simple reply command
     handler.<Player>register("reply", "<text...>", "A simple ping command that echoes a player's text.",

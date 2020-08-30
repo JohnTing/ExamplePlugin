@@ -1,0 +1,137 @@
+[
+  {
+    "type": "crawler",
+    "end": 99,
+    "spacing": 2,
+    "scaling": 1
+  },
+  {
+    "type": "crawler",
+    "begin": 9,
+    "end": 109,
+    "spacing": 2,
+    "scaling": 0.5
+  },
+  {
+    "type": "dagger",
+    "begin": 19,
+    "end": 119,
+    "spacing": 2,
+    "scaling": 1
+  },
+  {
+    "type": "dagger",
+    "begin": 30,
+    "end": 129,
+    "spacing": 2,
+    "scaling": 0.5
+  },
+  {
+    "type": "titan",
+    "begin": 39,
+    "end": 139,
+    "spacing": 2,
+    "scaling": 1
+  },
+  {
+    "type": "titan",
+    "begin": 50,
+    "end": 149,
+    "spacing": 2,
+    "scaling": 0.5
+  },
+  {
+    "type": "eruptor",
+    "begin": 59,
+    "end": 159,
+    "spacing": 2,
+    "scaling": 1
+  },
+  {
+    "type": "eruptor",
+    "begin": 70,
+    "end": 169,
+    "spacing": 2,
+    "scaling": 0.5
+  },
+  {
+    "type": "fortress",
+    "begin": 79,
+    "end": 179,
+    "spacing": 2,
+    "scaling": 1
+  },
+  {
+    "type": "fortress",
+    "begin": 90,
+    "end": 189,
+    "spacing": 2,
+    "scaling": 0.5
+  },
+  {
+    "type": "eruptor",
+    "begin": 99,
+    "spacing": 2,
+    "scaling": 1,
+    "effect": 8
+  },
+  {
+    "type": "fortress",
+    "begin": 110,
+    "spacing": 2,
+    "scaling": 0.5,
+    "effect": 8
+  },
+  {
+    "type": "chaos-array",
+    "begin": 119,
+    "spacing": 4,
+    "scaling": 1
+  },
+  {
+    "type": "chaos-array",
+    "begin": 130,
+    "spacing": 4,
+    "scaling": 0.5
+  },
+  {
+    "type": "chaos-array",
+    "begin": 139,
+    "spacing": 4,
+    "scaling": 1,
+    "effect": 8
+  },
+  {
+    "type": "chaos-array",
+    "begin": 150,
+    "spacing": 4,
+    "scaling": 0.5,
+    "effect": 8
+  },
+  {
+    "type": "eradicator",
+    "begin": 159,
+    "spacing": 6,
+    "scaling": 1
+  },
+  {
+    "type": "eradicator",
+    "begin": 170,
+    "spacing": 6,
+    "scaling": 0.5
+  },
+  {
+    "type": "eradicator",
+    "begin": 179,
+    "spacing": 8,
+    "scaling": 1,
+    "effect": 8
+  },
+  {
+    "type": "eradicator",
+    "begin": 190,
+    "spacing": 8,
+    "scaling": 0.5,
+    "effect": 8
+  }
+]

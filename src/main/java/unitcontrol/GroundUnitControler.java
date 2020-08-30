@@ -47,6 +47,7 @@ public class GroundUnitControler extends UnitControler {
     public void entered() {
       if (target.isZero()) {
         target.set(player);
+        
       }
     }
     public void update() {
