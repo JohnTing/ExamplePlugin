@@ -1,7 +1,7 @@
 {
-  "name": "ExamplePlugin",
-  "author": "Anuke",
-  "main": "example.ExamplePlugin",
-  "description": "A plugin to demonstrate some basic features.",
+  "name": "LoyalUnitPlugin",
+  "author": "JohnTing",
+  "main": "example.LoyalUnitPlugin",
+  "description": "Make the command unit loyal and not be snatched by other players.",
   "version": 1.0
 }
