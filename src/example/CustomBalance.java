@@ -63,7 +63,6 @@ public class CustomBalance {
                 return;
             }
             this.cfg = cfg;
-
             customSetting = cfg.parse();
             
             for (Entry<UnitType, UnitSetting> entry : customSetting.entrySet()) {
@@ -73,8 +72,7 @@ public class CustomBalance {
         } catch(IOException e) {
             Log.info("failed to parse config file: " + e.getMessage());
         } catch(Exception e) {
-
-            Log.info("failed to load weapons: " + e.getMessage());
+            Log.info("failed to load settings: " + e.getMessage());
         }
     }
 
@@ -120,8 +118,8 @@ public class CustomBalance {
           StringBuilder sb = new StringBuilder();
           sb.append(getClass().getName());
           sb.append(": ");
+          sb.append("\n");
           for (Field f : getClass().getDeclaredFields()) {
-            sb.append("\n");
             sb.append(f.getName());
             sb.append("=");
             try {
@@ -130,6 +128,7 @@ public class CustomBalance {
                 e.printStackTrace();
             }
             sb.append(", ");
+            sb.append("\n");
           }
           return sb.toString();
         }
@@ -246,16 +245,17 @@ public class CustomBalance {
           StringBuilder sb = new StringBuilder();
           sb.append(getClass().getName());
           sb.append(": ");
+          sb.append("\n");
           for (Field f : getClass().getDeclaredFields()) {
-            sb.append("\n");
             sb.append(f.getName());
             sb.append("=");
             try {
-                sb.append(f.get(this));
+                sb.append(f.get(this).toString());
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 e.printStackTrace();
             }
             sb.append(", ");
+            sb.append("\n");
           }
           return sb.toString();
         }

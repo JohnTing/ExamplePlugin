@@ -35,27 +35,11 @@ public class Main extends Plugin{
             customBalance.load();
         });
         handler.register("cb-show", "show configuration", (args) -> {
-
             for (Entry<UnitType, UnitSetting> entey : CustomBalance.customSetting.entrySet()) {
                 Log.info(entey.getKey().name + ":\n" + entey.getValue().toString());
             }
         });
     }
-
-    /*
-    @Override
-    public void registerClientCommands(CommandHandler handler){
-        handler.<Player>register("a", "test", (args, player) -> {
-            if(player.unit() != null) {
-                player.unit().apply(CustomBalance.unitStatusSetting.get(player.unit().type));
-            }
-            
-
-            // customBalance.unitStatusSetting;
-        });
-    }*/
-
-
 }
 
 
